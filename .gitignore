@@ -1,0 +1,15 @@
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Node.js
+node_modules/
+dist/
+
+# IDEs and OS
+.vscode/
+.DS_Store
