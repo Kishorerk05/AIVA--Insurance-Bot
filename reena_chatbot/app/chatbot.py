@@ -342,6 +342,11 @@ Always follow this format with line breaks exactly as shown.
 After user selects a plan:
 - Show a list of insurance companies offering that plan (3–4 options).
 - If user says "more", show more companies.
+- If user asks about a specific company not in the list, provide information about:
+  * Whether that company supports their plan type
+  * Similar plans they might offer
+  * Contact information or website
+  * Any special requirements or restrictions
 - Once user selects a company, ask:
    "Please provide your email and mobile number so our agent can contact you."
 -if email or mobile number any one is missing ask user to fill with the correct gmail formate
@@ -353,7 +358,9 @@ Important:
 - Do NOT put the plans on one single line.
 - Keep the indentation exactly like shown above.
 
-After collecting all the required fields, print a markdown table of the user's responses like:
+After collecting all the required fields (name, insurance type, for whom, age, conditions, lifestyle, budget), follow this exact sequence:
+
+1. First, display the user's information in a markdown table:
 
 Here is the user's information:
 
@@ -365,8 +372,10 @@ Conditions: <value>
 Lifestyle: <value>
 Budget: <value>
 
-At the bottom, ask:
-"✅ Please confirm, should I show you the plans?"
+2. Then ask for confirmation:
+"✅ Please confirm, should I show you the plans? You can also make any changes to your information if needed."
+
+3. Only after user confirms, then show the insurance plans.
 
 Ensure:
 - Ask for user's name first like what should I call you?.
@@ -375,9 +384,16 @@ Ensure:
 - If user tries to change an answer, update and continue smoothly.
 - Keep the response very short and concise.
 - Give the response in a properly organized format.
+- After collecting ALL information (name, type, for whom, age, conditions, lifestyle, budget), show the summary table FIRST.
+- Only show insurance plans AFTER user confirms the information is correct.
 - Explain the plan in a neat, organized manner with bullet points and line breaks while giving the plans.
 - After getting the user it can be added to response one time only dont repeate along with the responses.
--After getting the budget it will show the plan right that should not be in short and concise place them with the perfect gap.
+- After getting the budget it will show the plan right that should not be in short and concise place them with the perfect gap.
+- When users ask about specific insurance companies:
+  * Provide accurate information about plan compatibility
+  * Mention if the company offers similar coverage options
+  * Suggest alternatives if the company doesn't support their plan type
+  * Be helpful and informative, even if the company isn't in your initial list
 
 
 Begin by asking:
@@ -405,26 +421,53 @@ conversation = ConversationChain(
 #     text = re.sub(r"(Premium:.*?per year)", r"\1\n", text)
 #     return text.strip()
 def format_plans(text):
-    # Ensure each plan starts on a new line
-    text = re.sub(r"(\d\.\sPlan\s\d:)", r"\n\1", text)
-    # Force each field to be on a new line with indentation
-    text = re.sub(r"(Coverage:)", r"\n   \1", text)
-    text = re.sub(r"(Deductible:)", r"\n   \1", text)
-    text = re.sub(r"(Co-pay:)", r"\n   \1", text)
-    text = re.sub(r"(Premium:)", r"\n   \1", text)
-    # Remove extra spaces and enforce correct structure
+    # Convert plan formatting to proper markdown
+    # Ensure each plan starts on a new line with markdown headers
+    text = re.sub(r"(\d\.\sPlan\s\d:)", r"\n### \1", text)
+    
+    # Convert plan details to the format you want (each field on separate line)
+    # Handle different spacing patterns and convert to your desired format
+    text = re.sub(r"(\s+)(Coverage:)\s+(.+)", r"\n\2\n\3", text)
+    text = re.sub(r"(\s+)(Deductible:)\s+(.+)", r"\n\2\n\3", text)
+    text = re.sub(r"(\s+)(Co-pay:)\s+(.+)", r"\n\2\n\3", text)
+    text = re.sub(r"(\s+)(Premium:)\s+(.+)", r"\n\2\n\3", text)
+    
+    # Also handle cases where there might be different spacing
+    text = re.sub(r"Coverage:\s+(.+)", r"Coverage:\n\1", text)
+    text = re.sub(r"Deductible:\s+(.+)", r"Deductible:\n\1", text)
+    text = re.sub(r"Co-pay:\s+(.+)", r"Co-pay:\n\1", text)
+    text = re.sub(r"Premium:\s+(.+)", r"Premium:\n\1", text)
+    
+    # Handle the specific case from your example - convert bullet points to separate lines
+    text = re.sub(r"Plan 1:\s*- \*\*Coverage:\*\*", r"### 1. Plan 1:\nCoverage:", text)
+    text = re.sub(r"Plan 2:\s*- \*\*Coverage:\*\*", r"\n### 2. Plan 2:\nCoverage:", text)
+    text = re.sub(r"Plan 3:\s*- \*\*Coverage:\*\*", r"\n### 3. Plan 3:\nCoverage:", text)
+    
+    # Remove any remaining bullet points and bold formatting
+    text = re.sub(r"- \*\*(.+?):\*\*", r"\1:", text)
+    text = re.sub(r"- (.+?):", r"\1:", text)
+    
+    # Clean up extra spaces and enforce correct structure
     return text.strip()
 
 # === Formatter for user info ===
 def format_user_info(text):
     if "Here is the user's information:" in text:
-        text = re.sub(r"(Name:)", r"\n\1", text)
-        text = re.sub(r"(Insurance Type:)", r"\n\1", text)
-        text = re.sub(r"(For Whom:)", r"\n\1", text)
-        text = re.sub(r"(Age:)", r"\n\1", text)
-        text = re.sub(r"(Conditions:)", r"\n\1", text)
-        text = re.sub(r"(Lifestyle:)", r"\n\1", text)
-        text = re.sub(r"(Budget:)", r"\n\1", text)
+        # Convert to proper markdown table format
+        text = re.sub(r"Here is the user's information:", r"## Here is the user's information:", text)
+        
+        # Start the table structure
+        text = re.sub(r"Name: (.+)", r"| **Name:** | \1 |", text)
+        text = re.sub(r"Insurance Type: (.+)", r"| **Insurance Type:** | \1 |", text)
+        text = re.sub(r"For Whom: (.+)", r"| **For Whom:** | \1 |", text)
+        text = re.sub(r"Age: (.+)", r"| **Age:** | \1 |", text)
+        text = re.sub(r"Conditions: (.+)", r"| **Conditions:** | \1 |", text)
+        text = re.sub(r"Lifestyle: (.+)", r"| **Lifestyle:** | \1 |", text)
+        text = re.sub(r"Budget: (.+)", r"| **Budget:** | \1 |", text)
+        
+        # Add table header and separator
+        text = re.sub(r"## Here is the user's information:", 
+                     r"## Here is the user's information:\n\n| Field | Value |\n|-------|-------|", text)
     return text.strip()
 
 # # === Response handler ===

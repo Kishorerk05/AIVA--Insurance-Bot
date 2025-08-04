@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat AI</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 * {
     margin: 0;
@@ -373,6 +374,74 @@ body::before {
 .message-content:hover {
     transform: scale(1.02);
     box-shadow: 0 5px 25px var(--hover-glow);
+}
+
+/* Markdown styling for bot messages */
+.message.bot .message-content {
+    overflow-x: auto;
+}
+
+.message.bot .message-content h3 {
+    color: var(--accent-color);
+    margin: 15px 0 10px 0;
+    font-size: 1.1em;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 5px;
+}
+
+.message.bot .message-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.message.bot .message-content li {
+    margin: 5px 0;
+    padding: 3px 0;
+}
+
+.message.bot .message-content strong {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.message.bot .message-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 15px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.message.bot .message-content th,
+.message.bot .message-content td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message.bot .message-content th {
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+}
+
+.message.bot .message-content tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .message.bot .message-content table {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .message.bot .message-content th,
+[data-theme="light"] .message.bot .message-content td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .message.bot .message-content tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
 }
 
 /* Chat Input */
@@ -744,7 +813,9 @@ class GlassChatUI {
         contentDiv.className = 'message-content';
         
         if (sender === 'bot') {
-            contentDiv.innerHTML = `<i class=\"fas fa-robot\"></i> ${text}`;
+            // Render markdown with marked.js
+            const renderedText = marked.parse(text);
+            contentDiv.innerHTML = `<i class="fas fa-robot"></i> ${renderedText}`;
         } else {
             contentDiv.textContent = text;
         }
